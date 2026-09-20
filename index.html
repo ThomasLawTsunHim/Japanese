@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平假名隨機特訓 - Hiragana Practice</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .japanese-text {
+            font-family: 'Kosugi Maru', 'Noto Sans JP', sans-serif;
+        }
+        /* Custom scrollbar for row selection */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Card pulse animation on hover */
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .option-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        /* Smooth fade transitions */
+        .fade-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 200ms, transform 200ms;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-rose-500 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-indigo-200 japanese-text">
+                    あ
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-lg leading-tight">平假名特訓</h1>
+                    <p class="text-xs text-slate-500">Hiragana Master</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <!-- Audio Sound Toggle Button -->
+                <button id="soundToggleBtn" title="切換音效" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-volume-high text-indigo-600"></i>
+                </button>
+                <!-- View Hiragana Chart Table Button -->
+                <button id="chartModalBtn" title="五十音對照表" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-table"></i>
+                </button>
+                <!-- Stats Modal Button -->
+                <button id="statsModalBtn" title="練習統計" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-chart-line"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col">
+
+        <!-- ================= VIEW 1: SELECTION MENU ================= -->
+        <section id="menuView" class="flex-1 flex flex-col justify-center py-4">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-100 space-y-6">
+                
+                <div class="text-center space-y-2">
+                    <span class="px-3 py-1 bg-indigo-50 text-indigo-600 font-semibold rounded-full text-xs tracking-wide uppercase">
+                        設定學習範圍
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800">選擇你想練習的假名</h2>
+                    <p class="text-slate-500 text-sm">勾選下方字行或使用快速選擇按鈕，開始強化記憶！</p>
+                </div>
+
+                <!-- Quick Select Buttons -->
+                <div class="flex flex-wrap gap-2 justify-center pt-2">
+                    <button id="selectAllBtn" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-xs font-semibold text-slate-600 transition">
+                        <i class="fa-solid fa-check-double mr-1"></i> 全選
+                    </button>
+                    <button id="selectBasicBtn" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-xs font-semibold text-slate-600 transition">
+                        清音 (あ-わ)
+                    </button>
+                    <button id="selectDakutenBtn" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-xs font-semibold text-slate-600 transition">
+                        濁音・半濁音
+                    </button>
+                    <button id="selectYoonBtn" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-xs font-semibold text-slate-600 transition">
+                        拗音 (きゃ...)
+                    </button>
+                    <button id="deselectAllBtn" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold text-slate-600 transition">
+                        <i class="fa-solid fa-xmark mr-1"></i> 清空
+                    </button>
+                </div>
+
+                <!-- Range Selector Checkbox Grid -->
+                <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                    <!-- 清音 Section -->
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">五十音 (清音 Seion)</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="seionGrid">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- 濁音・半濁音 Section -->
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">濁音・半濁音 (Dakuten / Handakuten)</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="dakutenGrid">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- 拗音 Section -->
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">拗音 (Yōon)</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="yoonGrid">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mode Selection -->
+                <div class="border-t border-slate-100 pt-5 space-y-3">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">初始測驗模式</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="relative flex items-center p-3.5 rounded-2xl border-2 border-indigo-500 bg-indigo-50/50 cursor-pointer transition hover:bg-indigo-50 mode-radio-label">
+                            <input type="radio" name="practiceMode" value="hira2rom" checked class="text-indigo-600 focus:ring-indigo-500">
+                            <div class="ml-3">
+                                <span class="block text-sm font-bold text-slate-800">平假名 ➔ 羅馬拼音</span>
+                                <span class="block text-xs text-slate-500">題目為平假名，選項為羅馬音</span>
+                            </div>
+                        </label>
+                        <label class="relative flex items-center p-3.5 rounded-2xl border-2 border-slate-200 bg-white cursor-pointer transition hover:bg-slate-50 mode-radio-label">
+                            <input type="radio" name="practiceMode" value="rom2hira" class="text-indigo-600 focus:ring-indigo-500">
+                            <div class="ml-3">
+                                <span class="block text-sm font-bold text-slate-800">羅馬拼音 ➔ 平假名</span>
+                                <span class="block text-xs text-slate-500">題目為羅馬音，選項為平假名</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Start Training Action Button -->
+                <div class="pt-2">
+                    <button id="startPracticeBtn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-lg shadow-lg shadow-indigo-200 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-play"></i>
+                        <span>開始特訓</span>
+                        <span id="selectedCountBadge" class="ml-2 bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-medium">0 個字</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 2: PRACTICE SCREEN ================= -->
+        <section id="practiceView" class="hidden flex-1 flex flex-col justify-between py-2 sm:py-4 max-w-2xl mx-auto w-full">
+            
+            <!-- Practice Toolbar & Stats Bar -->
+            <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-md border border-slate-100 flex items-center justify-between mb-4">
+                <button id="backToMenuBtn" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>返回選單</span>
+                </button>
+
+                <!-- Current Streak & Counter -->
+                <div class="flex items-center space-x-4 text-xs sm:text-sm font-semibold">
+                    <div class="flex items-center text-amber-500 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100" title="連續答對">
+                        <i class="fa-solid fa-fire mr-1.5"></i>
+                        <span id="streakCounter">0</span>
+                    </div>
+                    <div class="flex items-center text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100" title="答對率">
+                        <i class="fa-solid fa-circle-check mr-1.5"></i>
+                        <span id="accuracyRate">100%</span>
+                    </div>
+                </div>
+
+                <!-- Switch Mode Button -->
+                <button id="switchModeBtn" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs sm:text-sm transition flex items-center space-x-1.5 border border-indigo-100">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span id="currentModeLabel">切換模式</span>
+                </button>
+            </div>
+
+            <!-- TOP HALF: Target Character Display Card -->
+            <div class="flex-1 min-h-[220px] sm:min-h-[280px] bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden my-auto">
+                <!-- Background decorative shapes -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-50 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-rose-50 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Top indicator label -->
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2" id="promptTypeLabel">
+                    請選擇正確的羅馬音
+                </div>
+
+                <!-- Target Character Box -->
+                <div class="relative flex flex-col items-center justify-center cursor-pointer group" id="speakTargetBtn" title="點擊發音">
+                    <div id="targetCharacter" class="text-7xl sm:text-9xl font-extrabold text-slate-800 japanese-text tracking-wide transition transform group-hover:scale-105 select-none my-2">
+                        あ
+                    </div>
+                    <!-- Speak Icon Indicator -->
+                    <button class="mt-1 px-3 py-1 rounded-full bg-slate-100 group-hover:bg-indigo-100 text-slate-500 group-hover:text-indigo-600 text-xs transition flex items-center space-x-1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>朗讀音聲</span>
+                    </button>
+                </div>
+
+                <!-- Feedback Banner Message (Correct / Wrong) -->
+                <div id="feedbackBanner" class="absolute bottom-3 inset-x-4 py-2.5 px-4 rounded-xl text-center text-sm font-bold hidden transition-all duration-300 shadow-sm flex items-center justify-center space-x-2">
+                    <i id="feedbackIcon" class="text-lg"></i>
+                    <span id="feedbackText"></span>
+                </div>
+            </div>
+
+            <!-- BOTTOM HALF: 5 Option Buttons Grid -->
+            <div class="mt-4 sm:mt-6 space-y-3">
+                <div class="text-center text-xs text-slate-400 font-medium">從以下 5 個選項中點選答案：</div>
+                <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+                    <!-- 5 Options populated dynamically -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL 1: HIRAGANA CHART TABLE ================= -->
+    <div id="chartModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-table text-indigo-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-base sm:text-lg">五十音完整對照表</h3>
+                </div>
+                <button id="closeChartModalBtn" class="w-8 h-8 rounded-full bg-white hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <!-- Modal Body (Table Container) -->
+            <div class="p-4 overflow-y-auto flex-1 space-y-6">
+                <div>
+                    <h4 class="text-xs font-bold text-indigo-600 tracking-wider uppercase mb-3">清音 (Seion)</h4>
+                    <div id="chartSeionTable" class="grid grid-cols-5 gap-2 text-center"></div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-indigo-600 tracking-wider uppercase mb-3">濁音・半濁音 (Dakuten)</h4>
+                    <div id="chartDakutenTable" class="grid grid-cols-5 gap-2 text-center"></div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-indigo-600 tracking-wider uppercase mb-3">拗音 (Yōon)</h4>
+                    <div id="chartYoonTable" class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: USER STATS ================= -->
+    <div id="statsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-pie text-indigo-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-lg">特訓統計紀錄</h3>
+                </div>
+                <button id="closeStatsModalBtn" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 rounded-2xl p-4 text-center">
+                    <span class="block text-xs text-slate-400 font-semibold mb-1">總練習題數</span>
+                    <span id="statTotalCount" class="text-2xl font-black text-slate-800">0</span>
+                </div>
+                <div class="bg-slate-50 rounded-2xl p-4 text-center">
+                    <span class="block text-xs text-slate-400 font-semibold mb-1">最高連續答對</span>
+                    <span id="statMaxStreak" class="text-2xl font-black text-amber-500">0</span>
+                </div>
+                <div class="bg-slate-50 rounded-2xl p-4 text-center">
+                    <span class="block text-xs text-slate-400 font-semibold mb-1">答對次數</span>
+                    <span id="statCorrectCount" class="text-2xl font-black text-emerald-600">0</span>
+                </div>
+                <div class="bg-slate-50 rounded-2xl p-4 text-center">
+                    <span class="block text-xs text-slate-400 font-semibold mb-1">答錯次數</span>
+                    <span id="statWrongCount" class="text-2xl font-black text-rose-500">0</span>
+                </div>
+            </div>
+
+            <button id="resetStatsBtn" class="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 font-semibold text-xs transition">
+                <i class="fa-solid fa-trash-can mr-1"></i> 重設所有數據
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= HIRAGANA DATASET ================= */
+        const HIRAGANA_DATA = {
+            seion: [
+                { id: "a_row", name: "あ行", items: [{ kana: "あ", romaji: "a" }, { kana: "い", romaji: "i" }, { kana: "う", romaji: "u" }, { kana: "え", romaji: "e" }, { kana: "お", romaji: "o" }] },
+                { id: "ka_row", name: "か行", items: [{ kana: "か", romaji: "ka" }, { kana: "き", romaji: "ki" }, { kana: "く", romaji: "ku" }, { kana: "け", romaji: "ke" }, { kana: "こ", romaji: "ko" }] },
+                { id: "sa_row", name: "さ行", items: [{ kana: "さ", romaji: "sa" }, { kana: "し", romaji: "shi" }, { kana: "す", romaji: "su" }, { kana: "せ", romaji: "se" }, { kana: "そ", romaji: "so" }] },
+                { id: "ta_row", name: "た行", items: [{ kana: "た", romaji: "ta" }, { kana: "ち", romaji: "chi" }, { kana: "つ", romaji: "tsu" }, { kana: "て", romaji: "te" }, { kana: "と", romaji: "to" }] },
+                { id: "na_row", name: "な行", items: [{ kana: "な", romaji: "na" }, { kana: "に", romaji: "ni" }, { kana: "ぬ", romaji: "nu" }, { kana: "ね", romaji: "ne" }, { kana: "の", romaji: "no" }] },
+                { id: "ha_row", name: "は行", items: [{ kana: "は", romaji: "ha" }, { kana: "ひ", romaji: "hi" }, { kana: "ふ", romaji: "fu" }, { kana: "へ", romaji: "he" }, { kana: "ほ", romaji: "ho" }] },
+                { id: "ma_row", name: "ま行", items: [{ kana: "ま", romaji: "ma" }, { kana: "み", romaji: "mi" }, { kana: "む", romaji: "mu" }, { kana: "め", romaji: "me" }, { kana: "も", romaji: "mo" }] },
+                { id: "ya_row", name: "や行", items: [{ kana: "や", romaji: "ya" }, { kana: "ゆ", romaji: "yu" }, { kana: "よ", romaji: "yo" }] },
+                { id: "ra_row", name: "ら行", items: [{ kana: "ら", romaji: "ra" }, { kana: "り", romaji: "ri" }, { kana: "る", romaji: "ru" }, { kana: "れ", romaji: "re" }, { kana: "ろ", romaji: "ro" }] },
+                { id: "wa_row", name: "わ/ん行", items: [{ kana: "わ", romaji: "wa" }, { kana: "を", romaji: "wo" }, { kana: "ん", romaji: "n" }] }
+            ],
+            dakuten: [
+                { id: "ga_row", name: "が行", items: [{ kana: "が", romaji: "ga" }, { kana: "ぎ", romaji: "gi" }, { kana: "ぐ", romaji: "gu" }, { kana: "げ", romaji: "ge" }, { kana: "ご", romaji: "go" }] },
+                { id: "za_row", name: "ざ行", items: [{ kana: "ざ", romaji: "za" }, { kana: "じ", romaji: "ji" }, { kana: "ず", romaji: "zu" }, { kana: "ぜ", romaji: "ze" }, { kana: "ぞ", romaji: "zo" }] },
+                { id: "da_row", name: "だ行", items: [{ kana: "だ", romaji: "da" }, { kana: "ぢ", romaji: "ji" }, { kana: "づ", romaji: "zu" }, { kana: "で", romaji: "de" }, { kana: "ど", romaji: "do" }] },
+                { id: "ba_row", name: "ば行", items: [{ kana: "ば", romaji: "ba" }, { kana: "び", romaji: "bi" }, { kana: "ぶ", romaji: "bu" }, { kana: "べ", romaji: "be" }, { kana: "ぼ", romaji: "bo" }] },
+                { id: "pa_row", name: "ぱ行", items: [{ kana: "ぱ", romaji: "pa" }, { kana: "ぴ", romaji: "pi" }, { kana: "ぷ", romaji: "pu" }, { kana: "ぺ", romaji: "pe" }, { kana: "ぽ", romaji: "po" }] }
+            ],
+            yoon: [
+                { id: "k_yoon", name: "きゃ行", items: [{ kana: "きゃ", romaji: "kya" }, { kana: "きゅ", romaji: "kyu" }, { kana: "きょ", romaji: "kyo" }] },
+                { id: "s_yoon", name: "しゃ行", items: [{ kana: "しゃ", romaji: "sha" }, { kana: "しゅ", romaji: "shu" }, { kana: "しょ", romaji: "sho" }] },
+                { id: "t_yoon", name: "ちゃ行", items: [{ kana: "ちゃ", romaji: "cha" }, { kana: "ちゅ", romaji: "chu" }, { kana: "ちょ", romaji: "cho" }] },
+                { id: "n_yoon", name: "にゃ行", items: [{ kana: "にゃ", romaji: "nya" }, { kana: "にゅ", romaji: "nyu" }, { kana: "にょ", romaji: "nyo" }] },
+                { id: "h_yoon", name: "ひゃ行", items: [{ kana: "ひゃ", romaji: "hya" }, { kana: "ひゅ", romaji: "hyu" }, { kana: "ひょ", romaji: "hyo" }] },
+                { id: "m_yoon", name: "みゃ行", items: [{ kana: "みゃ", romaji: "mya" }, { kana: "みゅ", romaji: "myu" }, { kana: "みょ", romaji: "myo" }] },
+                { id: "r_yoon", name: "りゃ行", items: [{ kana: "りゃ", romaji: "rya" }, { kana: "りゅ", romaji: "ryu" }, { kana: "りょ", romaji: "ryo" }] },
+                { id: "g_yoon", name: "ぎゃ行", items: [{ kana: "ぎゃ", romaji: "gya" }, { kana: "ぎゅ", romaji: "gyu" }, { kana: "ぎょ", romaji: "gyo" }] },
+                { id: "j_yoon", name: "じゃ行", items: [{ kana: "じゃ", romaji: "ja" }, { kana: "じゅ", romaji: "ju" }, { kana: "じょ", romaji: "jo" }] },
+                { id: "b_yoon", name: "びゃ行", items: [{ kana: "びゃ", romaji: "bya" }, { kana: "びゅ", romaji: "byu" }, { kana: "びょ", romaji: "byo" }] },
+                { id: "p_yoon", name: "ぴゃ行", items: [{ kana: "ぴゃ", romaji: "pya" }, { kana: "ぴゅ", romaji: "pyu" }, { kana: "ぴょ", romaji: "pyo" }] }
+            ]
+        };
+
+        // Flatten dataset for quick reference
+        const ALL_ITEMS = [];
+        [...HIRAGANA_DATA.seion, ...HIRAGANA_DATA.dakuten, ...HIRAGANA_DATA.yoon].forEach(row => {
+            row.items.forEach(item => ALL_ITEMS.push(item));
+        });
+
+        /* ================= STATE MANAGEMENT ================= */
+        const state = {
+            selectedRowIds: new Set(["a_row", "ka_row", "sa_row", "ta_row", "na_row"]), // default active rows
+            mode: "hira2rom", // "hira2rom" or "rom2hira"
+            soundEnabled: true,
+            activePool: [],
+            currentQuestion: null,
+            options: [],
+            isAnswered: false,
+            stats: {
+                total: 0,
+                correct: 0,
+                wrong: 0,
+                streak: 0,
+                maxStreak: 0
+            }
+        };
+
+        /* ================= AUDIO & SOUND SYNTHESIS ================= */
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playBeep(type) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now); // A3
+                    osc.frequency.setValueAtTime(164.81, now + 0.1); // E3
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) {
+                console.warn('Audio playback error', e);
+            }
+        }
+
+        // Japanese Speech Synthesis
+        function speakKana(text) {
+            if (!state.soundEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // stop current audio
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.85; // Slightly slower for clear learning
+            window.speechSynthesis.speak(utterance);
+        }
+
+        /* ================= DOM ELEMENTS ================= */
+        const menuView = document.getElementById('menuView');
+        const practiceView = document.getElementById('practiceView');
+        const seionGrid = document.getElementById('seionGrid');
+        const dakutenGrid = document.getElementById('dakutenGrid');
+        const yoonGrid = document.getElementById('yoonGrid');
+        const selectedCountBadge = document.getElementById('selectedCountBadge');
+        
+        const targetCharacter = document.getElementById('targetCharacter');
+        const promptTypeLabel = document.getElementById('promptTypeLabel');
+        const speakTargetBtn = document.getElementById('speakTargetBtn');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const feedbackBanner = document.getElementById('feedbackBanner');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const feedbackText = document.getElementById('feedbackText');
+        
+        const streakCounter = document.getElementById('streakCounter');
+        const accuracyRate = document.getElementById('accuracyRate');
+        const currentModeLabel = document.getElementById('currentModeLabel');
+
+        /* ================= INITIALIZATION & SELECTION MENU ================= */
+        function initMenuUI() {
+            renderCheckboxGrid(HIRAGANA_DATA.seion, seionGrid);
+            renderCheckboxGrid(HIRAGANA_DATA.dakuten, dakutenGrid);
+            renderCheckboxGrid(HIRAGANA_DATA.yoon, yoonGrid);
+            updateSelectedBadge();
+        }
+
+        function renderCheckboxGrid(rows, container) {
+            container.innerHTML = '';
+            rows.forEach(row => {
+                const label = document.createElement('label');
+                const isChecked = state.selectedRowIds.has(row.id);
+                label.className = `flex items-center p-2.5 rounded-xl border text-xs sm:text-sm font-semibold cursor-pointer transition select-none ${
+                    isChecked 
+                    ? 'border-indigo-500 bg-indigo-50/70 text-indigo-700 shadow-sm' 
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`;
+                
+                label.innerHTML = `
+                    <input type="checkbox" value="${row.id}" ${isChecked ? 'checked' : ''} class="hidden row-checkbox">
+                    <div class="w-4 h-4 rounded border flex items-center justify-center mr-2 text-xs ${
+                        isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300'
+                    }">
+                        ${isChecked ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                    </div>
+                    <span>${row.name}</span>
+                `;
+
+                const checkbox = label.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        state.selectedRowIds.add(row.id);
+                    } else {
+                        state.selectedRowIds.delete(row.id);
+                    }
+                    renderCheckboxGrid(HIRAGANA_DATA.seion, seionGrid);
+                    renderCheckboxGrid(HIRAGANA_DATA.dakuten, dakutenGrid);
+                    renderCheckboxGrid(HIRAGANA_DATA.yoon, yoonGrid);
+                    updateSelectedBadge();
+                });
+
+                container.appendChild(label);
+            });
+        }
+
+        function updateSelectedBadge() {
+            let totalKana = 0;
+            const activeRows = [...HIRAGANA_DATA.seion, ...HIRAGANA_DATA.dakuten, ...HIRAGANA_DATA.yoon].filter(r => state.selectedRowIds.has(r.id));
+            activeRows.forEach(r => totalKana += r.items.length);
+            selectedCountBadge.textContent = `${totalKana} 個字`;
+        }
+
+        /* Preset Select Buttons */
+        document.getElementById('selectAllBtn').addEventListener('click', () => {
+            [...HIRAGANA_DATA.seion, ...HIRAGANA_DATA.dakuten, ...HIRAGANA_DATA.yoon].forEach(r => state.selectedRowIds.add(r.id));
+            initMenuUI();
+        });
+
+        document.getElementById('selectBasicBtn').addEventListener('click', () => {
+            state.selectedRowIds.clear();
+            HIRAGANA_DATA.seion.forEach(r => state.selectedRowIds.add(r.id));
+            initMenuUI();
+        });
+
+        document.getElementById('selectDakutenBtn').addEventListener('click', () => {
+            state.selectedRowIds.clear();
+            HIRAGANA_DATA.dakuten.forEach(r => state.selectedRowIds.add(r.id));
+            initMenuUI();
+        });
+
+        document.getElementById('selectYoonBtn').addEventListener('click', () => {
+            state.selectedRowIds.clear();
+            HIRAGANA_DATA.yoon.forEach(r => state.selectedRowIds.add(r.id));
+            initMenuUI();
+        });
+
+        document.getElementById('deselectAllBtn').addEventListener('click', () => {
+            state.selectedRowIds.clear();
+            initMenuUI();
+        });
+
+        // Mode Radio selection styling update
+        document.querySelectorAll('input[name="practiceMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.mode = e.target.value;
+                document.querySelectorAll('.mode-radio-label').forEach(label => {
+                    label.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+                    label.classList.add('border-slate-200', 'bg-white');
+                });
+                const parent = e.target.closest('.mode-radio-label');
+                if (parent) {
+                    parent.classList.remove('border-slate-200', 'bg-white');
+                    parent.classList.add('border-indigo-500', 'bg-indigo-50/50');
+                }
+            });
+        });
+
+        /* ================= TRAINING LOGIC ================= */
+        document.getElementById('startPracticeBtn').addEventListener('click', () => {
+            // Build active pool
+            const activePool = [];
+            const activeRows = [...HIRAGANA_DATA.seion, ...HIRAGANA_DATA.dakuten, ...HIRAGANA_DATA.yoon].filter(r => state.selectedRowIds.has(r.id));
+            activeRows.forEach(r => activePool.push(...r.items));
+
+            if (activePool.length === 0) {
+                alertModal("請至少選擇一個假名行進行特訓！");
+                return;
+            }
+
+            state.activePool = activePool;
+            menuView.classList.add('hidden');
+            practiceView.classList.remove('hidden');
+            
+            updateModeDisplay();
+            nextQuestion();
+        });
+
+        document.getElementById('backToMenuBtn').addEventListener('click', () => {
+            practiceView.classList.add('hidden');
+            menuView.classList.remove('hidden');
+        });
+
+        document.getElementById('switchModeBtn').addEventListener('click', () => {
+            state.mode = state.mode === 'hira2rom' ? 'rom2hira' : 'hira2rom';
+            updateModeDisplay();
+            nextQuestion();
+        });
+
+        function updateModeDisplay() {
+            if (state.mode === 'hira2rom') {
+                currentModeLabel.textContent = "看假名選羅馬音";
+                promptTypeLabel.textContent = "請選擇正確的羅馬音";
+            } else {
+                currentModeLabel.textContent = "看羅馬音選假名";
+                promptTypeLabel.textContent = "請選擇正確的平假名";
+            }
+        }
+
+        // Generate Random Question & 5 Options
+        function nextQuestion() {
+            state.isAnswered = false;
+            hideFeedback();
+
+            // Pick random target from active pool
+            const randomIndex = Math.floor(Math.random() * state.activePool.length);
+            const target = state.activePool[randomIndex];
+            state.currentQuestion = target;
+
+            // Generate 4 distinct distractors from ALL_ITEMS
+            const distractors = [];
+            const otherItems = ALL_ITEMS.filter(item => item.kana !== target.kana);
+            
+            // Shuffle distractors
+            const shuffledOthers = [...otherItems].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < 4; i++) {
+                distractors.push(shuffledOthers[i]);
+            }
+
+            // Combine and shuffle 5 options
+            const rawOptions = [target, ...distractors].sort(() => 0.5 - Math.random());
+            state.options = rawOptions;
+
+            // Render Prompt
+            if (state.mode === 'hira2rom') {
+                targetCharacter.textContent = target.kana;
+            } else {
+                targetCharacter.textContent = target.romaji;
+            }
+
+            // Speak audio if mode is Hiragana
+            if (state.mode === 'hira2rom') {
+                speakKana(target.kana);
+            }
+
+            // Render 5 Option Buttons
+            renderOptions();
+        }
+
+        function renderOptions() {
+            optionsGrid.innerHTML = '';
+            state.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full py-4 px-3 bg-white border-2 border-slate-200 rounded-2xl shadow-sm text-xl sm:text-2xl font-bold text-slate-800 transition flex items-center justify-center relative overflow-hidden select-none ${
+                    state.mode === 'rom2hira' ? 'japanese-text' : ''
+                }`;
+                
+                const displayText = state.mode === 'hira2rom' ? opt.romaji : opt.kana;
+                btn.innerHTML = `<span>${displayText}</span>`;
+
+                btn.addEventListener('click', () => handleOptionSelect(opt, btn));
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        /* Handle User Answer Selection */
+        function handleOptionSelect(selectedOpt, btnElement) {
+            if (state.isAnswered) return;
+            state.isAnswered = true;
+
+            const isCorrect = selectedOpt.kana === state.currentQuestion.kana;
+            const buttons = optionsGrid.querySelectorAll('.option-btn');
+
+            // Update stats
+            state.stats.total++;
+            if (isCorrect) {
+                state.stats.correct++;
+                state.stats.streak++;
+                if (state.stats.streak > state.stats.maxStreak) {
+                    state.stats.maxStreak = state.stats.streak;
+                }
+                playBeep('correct');
+                speakKana(state.currentQuestion.kana);
+
+                // Button style: green
+                btnElement.classList.remove('border-slate-200', 'bg-white');
+                btnElement.classList.add('border-emerald-500', 'bg-emerald-500', 'text-white', 'scale-105');
+
+                showFeedback(true, `答對了！ ${state.currentQuestion.kana} = ${state.currentQuestion.romaji}`);
+
+                // Confetti milestone on streaks (e.g., 5, 10, 20)
+                if (state.stats.streak > 0 && state.stats.streak % 5 === 0) {
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+                }
+
+                // Auto proceed to next round
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1000);
+
+            } else {
+                state.stats.wrong++;
+                state.stats.streak = 0;
+                playBeep('wrong');
+
+                // Button style: red
+                btnElement.classList.remove('border-slate-200', 'bg-white');
+                btnElement.classList.add('border-rose-500', 'bg-rose-500', 'text-white', 'animate-shake');
+
+                // Highlight correct button in green
+                buttons.forEach((b, i) => {
+                    const opt = state.options[i];
+                    if (opt.kana === state.currentQuestion.kana) {
+                        b.classList.remove('border-slate-200', 'bg-white');
+                        b.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+                    }
+                });
+
+                showFeedback(false, `答錯了！正確答案是：${state.currentQuestion.kana} (${state.currentQuestion.romaji})`);
+
+                // Auto proceed with slightly longer delay so user can read
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1800);
+            }
+
+            updateStatsHeader();
+        }
+
+        function showFeedback(isCorrect, message) {
+            feedbackBanner.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'text-white');
+            if (isCorrect) {
+                feedbackBanner.classList.add('bg-emerald-500', 'text-white');
+                feedbackIcon.className = 'fa-solid fa-circle-check';
+            } else {
+                feedbackBanner.classList.add('bg-rose-500', 'text-white');
+                feedbackIcon.className = 'fa-solid fa-circle-xmark';
+            }
+            feedbackText.textContent = message;
+        }
+
+        function hideFeedback() {
+            feedbackBanner.classList.add('hidden');
+        }
+
+        function updateStatsHeader() {
+            streakCounter.textContent = state.stats.streak;
+            const rate = state.stats.total > 0 ? Math.round((state.stats.correct / state.stats.total) * 100) : 100;
+            accuracyRate.textContent = `${rate}%`;
+        }
+
+        speakTargetBtn.addEventListener('click', () => {
+            if (state.currentQuestion) {
+                speakKana(state.currentQuestion.kana);
+            }
+        });
+
+        /* ================= SOUND TOGGLE ================= */
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
+        soundToggleBtn.addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            if (state.soundEnabled) {
+                soundToggleBtn.innerHTML = '<i class="fa-solid fa-volume-high text-indigo-600"></i>';
+            } else {
+                soundToggleBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-slate-400"></i>';
+            }
+        });
+
+        /* ================= MODAL: HIRAGANA CHART ================= */
+        const chartModal = document.getElementById('chartModal');
+        document.getElementById('chartModalBtn').addEventListener('click', () => {
+            renderChartTables();
+            chartModal.classList.remove('hidden');
+        });
+        document.getElementById('closeChartModalBtn').addEventListener('click', () => {
+            chartModal.classList.add('hidden');
+        });
+
+        function renderChartTables() {
+            renderChartSection(HIRAGANA_DATA.seion, document.getElementById('chartSeionTable'));
+            renderChartSection(HIRAGANA_DATA.dakuten, document.getElementById('chartDakutenTable'));
+            renderChartSection(HIRAGANA_DATA.yoon, document.getElementById('chartYoonTable'));
+        }
+
+        function renderChartSection(dataRows, container) {
+            container.innerHTML = '';
+            dataRows.forEach(row => {
+                row.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'p-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer flex flex-col items-center justify-center';
+                    card.innerHTML = `
+                        <span class="text-xl font-bold text-slate-800 japanese-text">${item.kana}</span>
+                        <span class="text-[11px] font-medium text-slate-400">${item.romaji}</span>
+                    `;
+                    card.addEventListener('click', () => speakKana(item.kana));
+                    container.appendChild(card);
+                });
+            });
+        }
+
+        /* ================= MODAL: STATS ================= */
+        const statsModal = document.getElementById('statsModal');
+        document.getElementById('statsModalBtn').addEventListener('click', () => {
+            document.getElementById('statTotalCount').textContent = state.stats.total;
+            document.getElementById('statMaxStreak').textContent = state.stats.maxStreak;
+            document.getElementById('statCorrectCount').textContent = state.stats.correct;
+            document.getElementById('statWrongCount').textContent = state.stats.wrong;
+            statsModal.classList.remove('hidden');
+        });
+        document.getElementById('closeStatsModalBtn').addEventListener('click', () => {
+            statsModal.classList.add('hidden');
+        });
+
+        document.getElementById('resetStatsBtn').addEventListener('click', () => {
+            state.stats = { total: 0, correct: 0, wrong: 0, streak: 0, maxStreak: 0 };
+            document.getElementById('statTotalCount').textContent = 0;
+            document.getElementById('statMaxStreak').textContent = 0;
+            document.getElementById('statCorrectCount').textContent = 0;
+            document.getElementById('statWrongCount').textContent = 0;
+            updateStatsHeader();
+        });
+
+        function alertModal(msg) {
+            alert(msg); // simple browser alert if no selection
+        }
+
+        // Initialize Menu UI on Load
+        window.onload = function() {
+            initMenuUI();
+        };
+    </script>
+</body>
+</html>
